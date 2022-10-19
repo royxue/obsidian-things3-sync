@@ -13,12 +13,12 @@ interface TodoInfo {
 
 interface PluginSettings {
 	authToken: string,
-	obsidianTag: string
+	obsidianTags: string
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	authToken: '',
-	obsidianTag: 'Obsidian'
+	obsidianTags: 'Obsidian'
 }
 
 function urlEncode(line: string) {
@@ -26,12 +26,12 @@ function urlEncode(line: string) {
 	return line
 }
 
-function contructTodo(line: string){
+function contructTodo(line: string, settings: PluginSettings){
 	line = line.trim();
 
 	const todo: TodoInfo = {
 		title: extractTitle(line),
-		tags: extractTags(line),
+		tags: extractTags(line, settings.obsidianTags),
 	}
 
 	return todo;
@@ -44,17 +44,18 @@ function extractTitle(line: string) {
 	return title;
 }
 
-function extractTags(line: string){
-	const regex = /#([^\s]+)/
+function extractTags(line: string, setting_tags: string){
+	const regex = /#([^\s]+)/g
 	const array = [...line.matchAll(regex)]
-	const tag_array = array.map(x => x[1])
+	var tag_array = array.map(x => x[1])
+	tag_array.push(setting_tags);
 	const tags = tag_array.join(',')
 	
 	return tags
 }
 
 function extractTarget(line: string) {
-	const regexId = /id\=(.*?)&/
+	const regexId = /id=(\w+)/
 	const id = line.match(regexId);
 	var todoId: string;
 	if (id != null) {
@@ -76,13 +77,13 @@ function extractTarget(line: string) {
 }
 
 function createTodo(todo: TodoInfo, deepLink: string){
-	const task = `things:///add?title=${todo.title}&notes=${deepLink}&tags=${todo.tags}&x-success=obsidian://todo-id`
-	window.open(task);
+	const url = `things:///add?title=${todo.title}&notes=${deepLink}&tags=${todo.tags}&x-success=obsidian://todo-id`
+	window.open(url);
 }
 
-function updateTodo(todo_id: string, completed: string){
-	const todo = `things:///update?id=${todo_id}&completed=${completed}&authToken=${this.settings.authToken}`
-	window.open(todo);
+function updateTodo(todoId: string, completed: string, authToken: string){
+	const url = `things:///update?id=${todoId}&completed=${completed}&auth-token=${authToken}`
+	window.open(url);
 }
 
 
@@ -137,7 +138,7 @@ export default class Things3Plugin extends Plugin {
 					const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
 					const encodedLink = urlEncode(obsidianDeepLink)
 					const line = getCurrentLine(editor, view)
-					const todo = contructTodo(line)
+					const todo = contructTodo(line, this.settings)
 					createTodo(todo, encodedLink)
 				}
 			}
@@ -159,7 +160,7 @@ export default class Things3Plugin extends Plugin {
 						new Notice(`This is not a things3 todo`);
 					} else {
 						view.app.commands.executeCommandById("editor:toggle-checklist-status")
-						updateTodo(target.todoId, target.afterStatus)
+						updateTodo(target.todoId, target.afterStatus, this.settings.authToken)
 						new Notice(`${target.todoId} set completed:${target.afterStatus} on things3`);
 					}
 					
@@ -197,7 +198,8 @@ class Things3SyncSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Auth Token')
-			.setDesc('Require Things3 Auth Token for upadte TODO status')
+			.setDesc('Require Things3 Auth Token for upadte TODO status \n Get Auth Token \
+			from things/Preferece/General/Enable things URL/Manage.')
 			.addText(text => text
 				.setPlaceholder('Enter your auth Token')
 				.setValue(this.plugin.settings.authToken)
@@ -209,13 +211,14 @@ class Things3SyncSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Obsidian Tag')
-			.setDesc('A Tag to mark TODOs from Obsidian')
+			.setDesc('The tags to mark obsidian TODO;\n Multiple tags using comma \
+			to separate tags;\n Leave this to blank will not add default tags')
 			.addText(text => text
-				.setPlaceholder('Enter your Tag')
-				.setValue(this.plugin.settings.obsidianTag)
+				.setPlaceholder('Enter your Tags')
+				.setValue(this.plugin.settings.obsidianTags)
 				.onChange(async (value) => {
 					// console.log('Secret: ' + value);
-					this.plugin.settings.obsidianTag = value;
+					this.plugin.settings.obsidianTags = value;
 					await this.plugin.saveSettings();
 				}));
 	}
