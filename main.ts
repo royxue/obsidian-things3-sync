@@ -1,81 +1,121 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+function getCurrentLine(editor: Editor, view: MarkdownView) {
+	const lineNumber = editor.getCursor().line
+	const lineText = editor.getLine(lineNumber)
+	return lineText
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+interface TodoInfo {
+	title: string,
+	tags: string
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+interface PluginSettings {
+	authToken: string,
+	obsidianTag: string
+}
+
+const DEFAULT_SETTINGS: PluginSettings = {
+	authToken: '',
+	obsidianTag: 'Obsidian'
+}
+
+function urlEncode(line: string) {
+	line = encodeURIComponent(line)
+	return line
+}
+
+function contructTodo(line: string){
+	line = line.trim();
+
+	const todo: TodoInfo = {
+		title: extractTitle(line),
+		tags: extractTags(line),
+	}
+
+	return todo;
+}
+
+function extractTitle(line: string) {
+	const regex = /#([^\s]+)/g
+	const title = line.replace(regex, '').trim();
+	
+	return title;
+}
+
+function extractTags(line: string){
+	const regex = /#([^\s]+)/
+	const array = [...line.matchAll(regex)]
+	const tag_array = array.map(x => x[1])
+	const tags = tag_array.join(',')
+	
+	return tags
+}
+
+function createTodo(todo: TodoInfo, deepLink: string){
+	const task = `things:///add?title=${todo.title}&notes=${deepLink}&tags=${todo.tags}&x-success=obsidian://todo-id`
+	window.open(task);
+}
+
+function updateTodo(task_id: string, completed: string){
+	const task = `things:///update?id=${task_id}&completed=${completed}&authToken=${this.settings.authToken}`
+	window.open(task);
+}
+
+
+
+export default class Things3Plugin extends Plugin {
+	settings: PluginSettings;
 
 	async onload() {
 		await this.loadSettings();
+		this.addSettingTab(new Things3SyncSettingTab(this.app, this));
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
+		this.registerObsidianProtocolHandler("todo-id", async (id) => {
+			const todoID = id['x-things-id'];
+			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (view == null) {
+				return;
+			} else {
+				const editor = view.editor
+				const currentLine = getCurrentLine(editor, view)
+				const firstLetterIndex = currentLine.search(/[^\s#-\[\]\*]/);
+				const line = currentLine.substring(firstLetterIndex, currentLine.length)
+				let editorPosition = view.editor.getCursor()
+				const lineLength = view.editor.getLine(editorPosition.line).length
+				let startRange: EditorPosition = {
+					line: editorPosition.line,
+					ch: firstLetterIndex
+				}
+				let endRange: EditorPosition = {
+					line: editorPosition.line,
+					ch: lineLength
+				}
+				view.editor.replaceRange(`- [ ] [${line}](things:///show?id=${todoID})`, startRange, endRange);
 			}
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
+	
+		
 		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
+			id: 'create-things-task',
+			name: 'Create Things Task',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+				const workspace = this.app.workspace;
+				const fileTitle = workspace.getActiveFile()
+				if (fileTitle == null) {
+					return;
+				} else {
+					let fileName = urlEncode(fileTitle.name)
+					fileName = fileName.replace(/\.md$/, '')
+					const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
+					const encodedLink = urlEncode(obsidianDeepLink)
+					const line = getCurrentLine(editor, view)
+					const todo = contructTodo(line)
+					createTodo(todo, encodedLink)
 				}
 			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		});		
 	}
 
 	onunload() {
@@ -91,26 +131,10 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+class Things3SyncSettingTab extends PluginSettingTab {
+	plugin: Things3Plugin;;
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: Things3Plugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -120,17 +144,29 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', {text: 'Settings for obsidian x thing3 plugin.'});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Auth Token')
+			.setDesc('Require Things3 Auth Token for upadte TODO status')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setPlaceholder('Enter your auth Token')
+				.setValue(this.plugin.settings.authToken)
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					// console.log('Secret: ' + value);
+					this.plugin.settings.authToken = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Obsidian Tag')
+			.setDesc('A Tag to mark TODOs from Obsidian')
+			.addText(text => text
+				.setPlaceholder('Enter your Tag')
+				.setValue(this.plugin.settings.obsidianTag)
+				.onChange(async (value) => {
+					// console.log('Secret: ' + value);
+					this.plugin.settings.obsidianTag = value;
 					await this.plugin.saveSettings();
 				}));
 	}
