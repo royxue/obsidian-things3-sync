@@ -8,17 +8,18 @@ function getCurrentLine(editor: Editor, view: MarkdownView) {
 
 interface TodoInfo {
 	title: string,
-	tags: string
+	tags: string,
+	date: string
 }
 
 interface PluginSettings {
 	authToken: string,
-	obsidianTags: string
+	defaultTags: string
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	authToken: '',
-	obsidianTags: 'Obsidian'
+	defaultTags: ''
 }
 
 function urlEncode(line: string) {
@@ -26,15 +27,26 @@ function urlEncode(line: string) {
 	return line
 }
 
-function contructTodo(line: string, settings: PluginSettings){
+function contructTodo(line: string, settings: PluginSettings, fileName: string){
 	line = line.trim();
 
 	const todo: TodoInfo = {
 		title: extractTitle(line),
-		tags: extractTags(line, settings.obsidianTags),
+		tags: extractTags(line, settings.defaultTags),
+		date: extractDate(fileName)
 	}
 
 	return todo;
+}
+
+function extractDate(line:string) {
+	const regex = /^(19|20)\d\d([- /.])(0[1-9]|1[012])\2(0[1-9]|[12][0-9]|3[01])/
+	var date = '';
+	const res = line.match(regex);
+	if (res) {
+    date = res[0];
+  }
+	return date;
 }
 
 function extractTitle(line: string) {
@@ -48,7 +60,9 @@ function extractTags(line: string, setting_tags: string){
 	const regex = /#([^\s]+)/g
 	const array = [...line.matchAll(regex)]
 	var tag_array = array.map(x => x[1])
-	tag_array.push(setting_tags);
+	if (setting_tags.length > 0) {
+		tag_array.push(setting_tags);
+	}
 	const tags = tag_array.join(',')
 	
 	return tags
@@ -77,7 +91,8 @@ function extractTarget(line: string) {
 }
 
 function createTodo(todo: TodoInfo, deepLink: string){
-	const url = `things:///add?title=${todo.title}&notes=${deepLink}&tags=${todo.tags}&x-success=obsidian://todo-id`
+	const url = `things:///add?title=${todo.title}&notes=${deepLink}&
+	tags=${todo.tags}&when=${todo.date}&x-success=obsidian://todo-id`
 	window.open(url);
 }
 
@@ -97,7 +112,6 @@ export default class Things3Plugin extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new Things3SyncSettingTab(this.app, this));
 
-
 		// Register Protocol Handler
 		this.registerObsidianProtocolHandler("todo-id", async (id) => {
 			const todoID = id['x-things-id'];
@@ -107,7 +121,7 @@ export default class Things3Plugin extends Plugin {
 			} else {
 				const editor = view.editor
 				const currentLine = getCurrentLine(editor, view)
-				const firstLetterIndex = currentLine.search(/[^\s#-\[\]\*]/);
+				const firstLetterIndex = currentLine.search(/[^\s#\-\[\]]/);
 				const line = currentLine.substring(firstLetterIndex, currentLine.length)
 				let editorPosition = view.editor.getCursor()
 				const lineLength = view.editor.getLine(editorPosition.line).length
@@ -138,7 +152,7 @@ export default class Things3Plugin extends Plugin {
 					const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
 					const encodedLink = urlEncode(obsidianDeepLink)
 					const line = getCurrentLine(editor, view)
-					const todo = contructTodo(line, this.settings)
+					const todo = contructTodo(line, this.settings, fileName)
 					createTodo(todo, encodedLink)
 				}
 			}
@@ -193,32 +207,29 @@ class Things3SyncSettingTab extends PluginSettingTab {
 		const {containerEl} = this;
 
 		containerEl.empty();
-
-		containerEl.createEl('h2', {text: 'Settings for obsidian x thing3 plugin.'});
+		containerEl.createEl('h2', {text: 'Settings for Obsidian Things3 Sync.'});
 
 		new Setting(containerEl)
 			.setName('Auth Token')
-			.setDesc('Require Things3 Auth Token for upadte TODO status \n Get Auth Token \
-			from things/Preferece/General/Enable things URL/Manage.')
+			.setDesc('Require Things3 Auth Token for syncing Todo status; Get Auth Token\
+			via Things3 -> Preferece -> General -> Enable things URL -> Manage.')
 			.addText(text => text
-				.setPlaceholder('Enter your auth Token')
+				.setPlaceholder('Auth Token for Sync Statue')
 				.setValue(this.plugin.settings.authToken)
 				.onChange(async (value) => {
-					// console.log('Secret: ' + value);
 					this.plugin.settings.authToken = value;
 					await this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
-			.setName('Obsidian Tag')
-			.setDesc('The tags to mark obsidian TODO;\n Multiple tags using comma \
-			to separate tags;\n Leave this to blank will not add default tags')
+			.setName('Default Tags')
+			.setDesc('The default tags for Obsidian Todo; Using comma(,) \
+			to separate multiple tags; Leave this in blank for no default tags')
 			.addText(text => text
-				.setPlaceholder('Enter your Tags')
-				.setValue(this.plugin.settings.obsidianTags)
+				.setPlaceholder('Leave your tags here')
+				.setValue(this.plugin.settings.defaultTags)
 				.onChange(async (value) => {
-					// console.log('Secret: ' + value);
-					this.plugin.settings.obsidianTags = value;
+					this.plugin.settings.defaultTags = value;
 					await this.plugin.saveSettings();
 				}));
 	}

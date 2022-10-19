@@ -1,73 +1,52 @@
-# Obsidian Sample Plugin
+# Obsidian Things3 Sync
+A Plugin for syncing between Obsidian and Things3. Supporting with Multi Language, Tags and Date. 
+## Features
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+* Support **Multiple Language** when creating todo.
+* Support **Todo Tags**. You can just add tags after todo, or add default tags in setting.
+* Support **Capture Date**, if you the file has a Date in it, it will capture the date when create the todo.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+## Usage
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+### Create Todo
+![create](./misc/create.png)
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Changes the default font color to red using `styles.css`.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+* Select the line of todo
 
-## First time developing plugins?
+* Using `cmd + p` and run the `Things3 Sync: Create Todo`
 
-Quick starting guide for new plugin devs:
+* ***Tags***: for now, the tags only support Things exsited tags. So add tag in Things3 first, and then use this plugin.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+### Toggle Todo
 
-## Releasing new releases
+* Select the line of todo
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+* Using `cmd + P` and run the `Things3 Sync: Create Todo`
 
 
-## API Documentation
 
-See https://github.com/obsidianmd/obsidian-api
+***Notes:*** If you wanna use the command conveniently, it would be better to set up a hotkeys for it.
+
+## Roadmap
+
+- [ ] Better Tags Support.
+
+- [ ] Better toggle trigger method.
+
+  
+
+## Security
+
+This plugin require your Things 3 Auth Token for sync Todo status. The token will be locally saved in your vault obsidian folder(./obsidian/plugins). So be carefully not to share the folder directly to anyone else, incase they got your token.
+
+
+
+## Feedback & Request
+
+Any feedback or request, please submit a issue here ;)
+Thanks a lot.
+
+## Attribution
+These following repos offered great help during development:
+* [Todoist Text](https://github.com/wesmoncrief/obsidian-todoist-text)
+* [Things Link](https://github.com/gavinmn/obsidian-things-link)

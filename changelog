@@ -1,0 +1,9 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+## [1.0.1] 2002-10-19
+The very first release
+### Added
+* create todo from obsidian to things3
+* support multiple language, tags, and date
+* toggle todo status from obsidian to things3
