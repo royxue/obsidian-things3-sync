@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, EditorPosition, Plugin, PluginSettingTab, Setting, Notice } from 'obsidian';
 
 function getCurrentLine(editor: Editor, view: MarkdownView) {
 	const lineNumber = editor.getCursor().line
@@ -53,14 +53,36 @@ function extractTags(line: string){
 	return tags
 }
 
+function extractTarget(line: string) {
+	const regexId = /id\=(.*?)&/
+	const id = line.match(regexId);
+	var todoId: string;
+	if (id != null) {
+		todoId = id[1];	
+	} else {
+		todoId = ''
+	}
+
+	const regexStatus = /\[(.)\]/
+	const status = line.match(regexStatus)
+	var afterStatus: string;
+	if (status && status[1] == ' ') {
+		afterStatus = 'true'
+	} else {
+		afterStatus = 'false'
+	}
+
+	return  {todoId, afterStatus}
+}
+
 function createTodo(todo: TodoInfo, deepLink: string){
 	const task = `things:///add?title=${todo.title}&notes=${deepLink}&tags=${todo.tags}&x-success=obsidian://todo-id`
 	window.open(task);
 }
 
-function updateTodo(task_id: string, completed: string){
-	const task = `things:///update?id=${task_id}&completed=${completed}&authToken=${this.settings.authToken}`
-	window.open(task);
+function updateTodo(todo_id: string, completed: string){
+	const todo = `things:///update?id=${todo_id}&completed=${completed}&authToken=${this.settings.authToken}`
+	window.open(todo);
 }
 
 
@@ -69,9 +91,13 @@ export default class Things3Plugin extends Plugin {
 	settings: PluginSettings;
 
 	async onload() {
+		
+		// Setup Settings Tab
 		await this.loadSettings();
 		this.addSettingTab(new Things3SyncSettingTab(this.app, this));
 
+
+		// Register Protocol Handler
 		this.registerObsidianProtocolHandler("todo-id", async (id) => {
 			const todoID = id['x-things-id'];
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -96,10 +122,10 @@ export default class Things3Plugin extends Plugin {
 			}
 		});
 	
-		
+		// Create TODO Command
 		this.addCommand({
-			id: 'create-things-task',
-			name: 'Create Things Task',
+			id: 'create-things-todo',
+			name: 'Create Things Todo',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const workspace = this.app.workspace;
 				const fileTitle = workspace.getActiveFile()
@@ -115,11 +141,34 @@ export default class Things3Plugin extends Plugin {
 					createTodo(todo, encodedLink)
 				}
 			}
-		});		
+		});
+		
+		// Toggle task status and sync to things
+		this.addCommand({
+			id: 'toggle-things-todo',
+			name: 'Toggle Things Todo',
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				const workspace = this.app.workspace;
+				const fileTitle = workspace.getActiveFile()
+				if (fileTitle == null) {
+					return;
+				} else {
+					const line = getCurrentLine(editor, view)
+					const target = extractTarget(line)
+					if (target.todoId == '') {
+						new Notice(`This is not a things3 todo`);
+					} else {
+						view.app.commands.executeCommandById("editor:toggle-checklist-status")
+						updateTodo(target.todoId, target.afterStatus)
+						new Notice(`${target.todoId} set completed:${target.afterStatus} on things3`);
+					}
+					
+				}
+			}
+		});
 	}
 
 	onunload() {
-
 	}
 
 	async loadSettings() {
