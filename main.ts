@@ -41,7 +41,7 @@ function contructTodo(line: string, settings: PluginSettings, fileName: string){
 
 function extractDate(line:string) {
 	const regex = /^(19|20)\d\d([- /.])(0[1-9]|1[012])\2(0[1-9]|[12][0-9]|3[01])/
-	var date = '';
+	let date = '';
 	const res = line.match(regex);
 	if (res) {
     date = res[0];
@@ -50,16 +50,20 @@ function extractDate(line:string) {
 }
 
 function extractTitle(line: string) {
-	const regex = /#([^\s]+)/g
-	const title = line.replace(regex, '').trim();
+	const regex = /[^#\s\-\[\]*](.*)/gs
+	const content = line.match(regex);
+	let title = '';
+	if (content != null) {
+		title = content[0]
+	}
 	
 	return title;
 }
 
 function extractTags(line: string, setting_tags: string){
-	const regex = /#([^\s]+)/g
+	const regex = /#[1]([^\s]+)/gs
 	const array = [...line.matchAll(regex)]
-	var tag_array = array.map(x => x[1])
+	const tag_array = array.map(x => x[1])
 	if (setting_tags.length > 0) {
 		tag_array.push(setting_tags);
 	}
@@ -71,7 +75,7 @@ function extractTags(line: string, setting_tags: string){
 function extractTarget(line: string) {
 	const regexId = /id=(\w+)/
 	const id = line.match(regexId);
-	var todoId: string;
+	let todoId: string;
 	if (id != null) {
 		todoId = id[1];	
 	} else {
@@ -80,7 +84,7 @@ function extractTarget(line: string) {
 
 	const regexStatus = /\[(.)\]/
 	const status = line.match(regexStatus)
-	var afterStatus: string;
+	let afterStatus: string;
 	if (status && status[1] == ' ') {
 		afterStatus = 'true'
 	} else {
@@ -91,13 +95,13 @@ function extractTarget(line: string) {
 }
 
 function createTodo(todo: TodoInfo, deepLink: string){
-	const url = `things:///add?title=${todo.title}&notes=${deepLink}&
-	tags=${todo.tags}&when=${todo.date}&x-success=obsidian://todo-id`
+	const url = `things:///add?title=${todo.title}&notes=${deepLink}&\
+	tags=${todo.tags}&when=${todo.date}&x-success=obsidian://things-sync-id`;
 	window.open(url);
 }
 
 function updateTodo(todoId: string, completed: string, authToken: string){
-	const url = `things:///update?id=${todoId}&completed=${completed}&auth-token=${authToken}`
+	const url = `things:///update?id=${todoId}&completed=${completed}&auth-token=${authToken}`;
 	window.open(url);
 }
 
@@ -113,7 +117,7 @@ export default class Things3Plugin extends Plugin {
 		this.addSettingTab(new Things3SyncSettingTab(this.app, this));
 
 		// Register Protocol Handler
-		this.registerObsidianProtocolHandler("todo-id", async (id) => {
+		this.registerObsidianProtocolHandler("things-sync-id", async (id) => {
 			const todoID = id['x-things-id'];
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view == null) {
@@ -121,19 +125,24 @@ export default class Things3Plugin extends Plugin {
 			} else {
 				const editor = view.editor
 				const currentLine = getCurrentLine(editor, view)
-				const firstLetterIndex = currentLine.search(/[^\s#\-\[\]]/);
+				const firstLetterIndex = currentLine.search(/[^\s#\-\[\]*]/);
 				const line = currentLine.substring(firstLetterIndex, currentLine.length)
-				let editorPosition = view.editor.getCursor()
+				const editorPosition = view.editor.getCursor()
 				const lineLength = view.editor.getLine(editorPosition.line).length
-				let startRange: EditorPosition = {
+				const startRange: EditorPosition = {
 					line: editorPosition.line,
 					ch: firstLetterIndex
 				}
-				let endRange: EditorPosition = {
+				const endRange: EditorPosition = {
 					line: editorPosition.line,
 					ch: lineLength
 				}
-				view.editor.replaceRange(`- [ ] [${line}](things:///show?id=${todoID})`, startRange, endRange);
+
+				if (firstLetterIndex > 0) {
+					view.editor.replaceRange(`[${line}](things:///show?id=${todoID})`, startRange, endRange);
+				} else {
+					view.editor.replaceRange(`- [ ] [${line}](things:///show?id=${todoID})`, startRange, endRange);
+				}
 			}
 		});
 	
@@ -196,7 +205,7 @@ export default class Things3Plugin extends Plugin {
 }
 
 class Things3SyncSettingTab extends PluginSettingTab {
-	plugin: Things3Plugin;;
+	plugin: Things3Plugin;
 
 	constructor(app: App, plugin: Things3Plugin) {
 		super(app, plugin);

@@ -29,7 +29,11 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 ## Roadmap
 
-- [ ] Better Tags Support.
+- [x] Multiple Markdown elements support.
+
+- [ ] Permanent URL support.
+
+- [ ] Better tags support.
 
 - [ ] Better toggle trigger method.
 

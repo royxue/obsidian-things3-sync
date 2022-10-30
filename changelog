@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] 2002-10-30
+The very first release
+### Added
+* Support for multiple markdown elements: title, list and so on.
+
+
 ## [1.0.1] 2002-10-19
 The very first release
 ### Added
