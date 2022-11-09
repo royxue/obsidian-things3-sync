@@ -55,3 +55,8 @@ Thanks a lot.
 These following repos offered great help during development:
 * [Todoist Text](https://github.com/wesmoncrief/obsidian-todoist-text)
 * [Things Link](https://github.com/gavinmn/obsidian-things-link)
+
+
+## Buy me a coffee
+
+<a href="https://www.buymeacoffee.com/royx" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
