@@ -223,7 +223,7 @@ class Things3SyncSettingTab extends PluginSettingTab {
 			.setDesc('Require Things3 Auth Token for syncing Todo status; Get Auth Token\
 			via Things3 -> Preferece -> General -> Enable things URL -> Manage.')
 			.addText(text => text
-				.setPlaceholder('Auth Token for Sync Statue')
+				.setPlaceholder('Leave Things3 Auth Token here')
 				.setValue(this.plugin.settings.authToken)
 				.onChange(async (value) => {
 					this.plugin.settings.authToken = value;

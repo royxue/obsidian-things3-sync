@@ -1,7 +1,8 @@
 # Obsidian Things3 Sync
-A Plugin for syncing between Obsidian and Things3. Supporting with Multi Language, Tags and Date. 
+A Plugin for syncing between Obsidian and Things3. Supporting with Multi Language, Tags and Date, Cross-Platform. 
 ## Features
 
+* Support Mac OS and iOS.
 * Support **Multiple Language** when creating todo.
 * Support **Todo Tags**. You can just add tags after todo, or add default tags in setting.
 * Support **Capture Date**, if you the file has a Date in it, it will capture the date when create the todo.
