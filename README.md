@@ -22,9 +22,9 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 * Select the line of todo
 
-* Using `cmd + P` and run the `Things3 Sync: Create Todo`
+* Using `cmd + P` and run the `Things3 Sync: Toggle Todo`
 
-
+* The Todo will be toggled both in Obsidian and Things3
 
 ***Notes:*** If you wanna use the command conveniently, it would be better to set up a hotkeys for it.
 
@@ -32,19 +32,15 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 - [x] Multiple Markdown elements support.
 
-- [ ] Permanent URL support.
+- [ ] Permanent URI support.
 
 - [ ] Better tags support.
 
 - [ ] Better toggle trigger method.
 
-  
-
 ## Security
 
 This plugin require your Things 3 Auth Token for sync Todo status. The token will be locally saved in your vault obsidian folder(./obsidian/plugins). So be carefully not to share the folder directly to anyone else, incase they got your token.
-
-
 
 ## Feedback & Request
 
@@ -55,7 +51,6 @@ Thanks a lot.
 These following repos offered great help during development:
 * [Todoist Text](https://github.com/wesmoncrief/obsidian-todoist-text)
 * [Things Link](https://github.com/gavinmn/obsidian-things-link)
-
 
 ## Buy me a coffee
 
