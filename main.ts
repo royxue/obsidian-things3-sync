@@ -29,10 +29,13 @@ function urlEncode(line: string) {
 
 function contructTodo(line: string, settings: PluginSettings, fileName: string){
 	line = line.trim();
+	const tags = extractTags(line, settings.defaultTags);
+
+	line = line.replace(/#([^\s]+)/gs, '');
 
 	const todo: TodoInfo = {
 		title: extractTitle(line),
-		tags: extractTags(line, settings.defaultTags),
+		tags: tags,
 		date: extractDate(fileName)
 	}
 
@@ -61,15 +64,16 @@ function extractTitle(line: string) {
 }
 
 function extractTags(line: string, setting_tags: string){
-	const regex = /#[1]([^\s]+)/gs
+	const regex = /#([^\s]+)/gs
 	const array = [...line.matchAll(regex)]
 	const tag_array = array.map(x => x[1])
 	if (setting_tags.length > 0) {
 		tag_array.push(setting_tags);
 	}
+	line = line.replace(regex, '');
 	const tags = tag_array.join(',')
 	
-	return tags
+	return tags;
 }
 
 function extractTarget(line: string) {
@@ -95,8 +99,7 @@ function extractTarget(line: string) {
 }
 
 function createTodo(todo: TodoInfo, deepLink: string){
-	const url = `things:///add?title=${todo.title}&notes=${deepLink}&\
-	tags=${todo.tags}&when=${todo.date}&x-success=obsidian://things-sync-id`;
+	const url = `things:///add?title=${todo.title}&notes=${deepLink}&when=${todo.date}&x-success=obsidian://things-sync-id&tags=${todo.tags}`;
 	window.open(url);
 }
 
@@ -104,8 +107,6 @@ function updateTodo(todoId: string, completed: string, authToken: string){
 	const url = `things:///update?id=${todoId}&completed=${completed}&auth-token=${authToken}`;
 	window.open(url);
 }
-
-
 
 export default class Things3Plugin extends Plugin {
 	settings: PluginSettings;

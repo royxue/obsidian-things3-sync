@@ -1,8 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] 2002-12-20
+Bug Fix ver
+* Fix Tags error issue.
+
 ## [1.0.2] 2002-10-30
-The very first release
+New Feature ver
 ### Added
 * Support for multiple markdown elements: title, list and so on.
 

@@ -34,7 +34,7 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 - [ ] Permanent URI support.
 
-- [ ] Better tags support.
+- [x] Better tags support.
 
 - [ ] Better toggle trigger method.
 
