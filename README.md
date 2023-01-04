@@ -32,11 +32,13 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 - [x] Multiple Markdown elements support.
 
-- [ ] Permanent URI support.
+- [x] Permanent URL support.
 
 - [x] Better tags support.
 
-- [ ] Better toggle trigger method.
+- [ ] ~~Better toggle trigger method.~~
+
+- [ ] Multi-line support.
 
 ## Security
 

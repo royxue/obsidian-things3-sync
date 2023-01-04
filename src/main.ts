@@ -1,15 +1,27 @@
 import { App, Editor, MarkdownView, EditorPosition, Plugin, PluginSettingTab, Setting, Notice } from 'obsidian';
 
+import {
+	urlEncode,
+	constructDeeplink
+} from './url';
+
+import {
+	TodoInfo,
+	createTodo,
+	updateTodo
+} from './things3';
+
+import {
+	extractDate,
+	extractTags,
+	extractTarget,
+	extractTitle
+} from './extractor'
+
 function getCurrentLine(editor: Editor, view: MarkdownView) {
 	const lineNumber = editor.getCursor().line
 	const lineText = editor.getLine(lineNumber)
 	return lineText
-}
-
-interface TodoInfo {
-	title: string,
-	tags: string,
-	date: string
 }
 
 interface PluginSettings {
@@ -20,11 +32,6 @@ interface PluginSettings {
 const DEFAULT_SETTINGS: PluginSettings = {
 	authToken: '',
 	defaultTags: ''
-}
-
-function urlEncode(line: string) {
-	line = encodeURIComponent(line)
-	return line
 }
 
 function contructTodo(line: string, settings: PluginSettings, fileName: string){
@@ -40,72 +47,6 @@ function contructTodo(line: string, settings: PluginSettings, fileName: string){
 	}
 
 	return todo;
-}
-
-function extractDate(line:string) {
-	const regex = /^(19|20)\d\d([- /.])(0[1-9]|1[012])\2(0[1-9]|[12][0-9]|3[01])/
-	let date = '';
-	const res = line.match(regex);
-	if (res) {
-    date = res[0];
-  }
-	return date;
-}
-
-function extractTitle(line: string) {
-	const regex = /[^#\s\-\[\]*](.*)/gs
-	const content = line.match(regex);
-	let title = '';
-	if (content != null) {
-		title = content[0]
-	}
-	
-	return title;
-}
-
-function extractTags(line: string, setting_tags: string){
-	const regex = /#([^\s]+)/gs
-	const array = [...line.matchAll(regex)]
-	const tag_array = array.map(x => x[1])
-	if (setting_tags.length > 0) {
-		tag_array.push(setting_tags);
-	}
-	line = line.replace(regex, '');
-	const tags = tag_array.join(',')
-	
-	return tags;
-}
-
-function extractTarget(line: string) {
-	const regexId = /id=(\w+)/
-	const id = line.match(regexId);
-	let todoId: string;
-	if (id != null) {
-		todoId = id[1];	
-	} else {
-		todoId = ''
-	}
-
-	const regexStatus = /\[(.)\]/
-	const status = line.match(regexStatus)
-	let afterStatus: string;
-	if (status && status[1] == ' ') {
-		afterStatus = 'true'
-	} else {
-		afterStatus = 'false'
-	}
-
-	return  {todoId, afterStatus}
-}
-
-function createTodo(todo: TodoInfo, deepLink: string){
-	const url = `things:///add?title=${todo.title}&notes=${deepLink}&when=${todo.date}&x-success=obsidian://things-sync-id&tags=${todo.tags}`;
-	window.open(url);
-}
-
-function updateTodo(todoId: string, completed: string, authToken: string){
-	const url = `things:///update?id=${todoId}&completed=${completed}&auth-token=${authToken}`;
-	window.open(url);
 }
 
 export default class Things3Plugin extends Plugin {
@@ -153,13 +94,16 @@ export default class Things3Plugin extends Plugin {
 			name: 'Create Things Todo',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const workspace = this.app.workspace;
+				const vault = this.app.vault;
 				const fileTitle = workspace.getActiveFile()
 				if (fileTitle == null) {
 					return;
 				} else {
 					let fileName = urlEncode(fileTitle.name)
 					fileName = fileName.replace(/\.md$/, '')
-					const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
+					const vaultName = vault.getName();
+					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
+					// const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
 					const encodedLink = urlEncode(obsidianDeepLink)
 					const line = getCurrentLine(editor, view)
 					const todo = contructTodo(line, this.settings, fileName)
