@@ -18,6 +18,8 @@ import {
 	extractTitle
 } from './extractor'
 
+// import { rangeByStep, Queue } from './utils';
+
 function getCurrentLine(editor: Editor, view: MarkdownView) {
 	const lineNumber = editor.getCursor().line
 	const lineText = editor.getLine(lineNumber)
@@ -53,6 +55,8 @@ export default class Things3Plugin extends Plugin {
 	settings: PluginSettings;
 
 	async onload() {
+		// Queue for update multi liens
+		// const toChange = new Queue<number>();
 		
 		// Setup Settings Tab
 		await this.loadSettings();
@@ -66,6 +70,8 @@ export default class Things3Plugin extends Plugin {
 				return;
 			} else {
 				const editor = view.editor
+				// const l = toChange.dequeue();
+				// editor.setCursor(l);
 				const currentLine = getCurrentLine(editor, view)
 				const firstLetterIndex = currentLine.search(/[^\s#\-\[\]*]/);
 				const line = currentLine.substring(firstLetterIndex, currentLine.length)
@@ -104,10 +110,26 @@ export default class Things3Plugin extends Plugin {
 					const vaultName = vault.getName();
 					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
 					// const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
-					const encodedLink = urlEncode(obsidianDeepLink)
-					const line = getCurrentLine(editor, view)
-					const todo = contructTodo(line, this.settings, fileName)
+					const encodedLink = urlEncode(obsidianDeepLink);
+					const line = getCurrentLine(editor, view);
+					const todo = contructTodo(line, this.settings, fileName);
 					createTodo(todo, encodedLink)
+
+					// let cursorLines: Array<number>;
+					// if (editor.somethingSelected()){
+					// 	const selected = editor.listSelections()[0];
+					// 	cursorLines = rangeByStep(selected.anchor.line, selected.head.line, 1)
+					// } else {
+					// 	cursorLines = [editor.getCursor().line]
+					// }
+					// for (const l of cursorLines) {
+					// 	editor.setCursor(l);
+					// 	const line = getCurrentLine(editor, view);
+					// 	const todo = contructTodo(line, this.settings, fileName);
+					// 	createTodo(todo, encodedLink)
+					// 	toChange.enqueue(l);
+					// }
+
 				}
 			}
 		});

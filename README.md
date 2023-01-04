@@ -38,7 +38,7 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 - [ ] ~~Better toggle trigger method.~~
 
-- [ ] Multi-line support.
+- [ ] ~~Multi-line support.~~
 
 ## Security
 
