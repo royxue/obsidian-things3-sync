@@ -28,6 +28,9 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 ***Notes:*** If you wanna use the command conveniently, it would be better to set up a hotkeys for it.
 
+### Create Todo from Note
+Directly create a Todo from Obsidian Note, with a backlink in Things3
+
 ## Roadmap
 
 - [x] Multiple Markdown elements support.
@@ -36,9 +39,11 @@ A Plugin for syncing between Obsidian and Things3. Supporting with Multi Languag
 
 - [x] Better tags support.
 
-- [ ] ~~Better toggle trigger method.~~
+- [ ] ~~Better toggle trigger method.~~ Due to Things API limitation
 
-- [ ] ~~Multi-line support.~~
+- [ ] ~~Multi-line support.~~ Due to Things x Obsidian communication limitation
+
+- [x] Obsidian Note to Things3 Todo
 
 ## Security
 

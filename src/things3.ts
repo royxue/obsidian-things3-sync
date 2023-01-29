@@ -14,3 +14,7 @@ export function updateTodo(todoId: string, completed: string, authToken: string)
 	window.open(url);
 }
 
+export function createTodoFromNote(todo: TodoInfo, deepLink: string){
+	const url = `things:///add?title=${todo.title}&notes=${deepLink}&when=${todo.date}`;
+	window.open(url);
+}

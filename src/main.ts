@@ -8,7 +8,8 @@ import {
 import {
 	TodoInfo,
 	createTodo,
-	updateTodo
+	updateTodo,
+	createTodoFromNote
 } from './things3';
 
 import {
@@ -157,6 +158,29 @@ export default class Things3Plugin extends Plugin {
 				}
 			}
 		});
+
+		// Toggle task status and sync to things
+		this.addCommand({
+			id: 'create-things-todo-from-note',
+			name: 'Create Things Todo from Note',
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				const workspace = this.app.workspace;
+				const vault = this.app.vault;
+				const fileTitle = workspace.getActiveFile()
+				if (fileTitle == null) {
+					return;
+				} else {
+					let fileName = urlEncode(fileTitle.name)
+					fileName = fileName.replace(/\.md$/, '')
+					const vaultName = vault.getName();
+					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
+					const encodedLink = urlEncode(obsidianDeepLink);
+					const todo = contructTodo(fileName, this.settings, fileName);
+					createTodoFromNote(todo, encodedLink)
+				}
+			}
+		});
+
 	}
 
 	onunload() {
