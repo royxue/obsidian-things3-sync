@@ -1,16 +1,24 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] 2023-01-30
+Bug Fix ver
+### Fixed
+* Fix vault name encoding bug.
+
 ## [1.2.0] 2023-01-29
 New Feature ver
+### Added
 * Obsidian Note to Todo
 
 ## [1.1.0] 2023-01-04
 New Feature ver
+### Added
 * Add permanent url
 
 ## [1.0.3] 2022-12-20
 Bug Fix ver
+### Fixed
 * Fix Tags error issue.
 
 ## [1.0.2] 2022-10-30

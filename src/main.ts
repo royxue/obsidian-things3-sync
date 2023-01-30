@@ -154,7 +154,6 @@ export default class Things3Plugin extends Plugin {
 						updateTodo(target.todoId, target.afterStatus, this.settings.authToken)
 						new Notice(`${target.todoId} set completed:${target.afterStatus} on things3`);
 					}
-					
 				}
 			}
 		});
@@ -172,7 +171,7 @@ export default class Things3Plugin extends Plugin {
 				} else {
 					let fileName = urlEncode(fileTitle.name)
 					fileName = fileName.replace(/\.md$/, '')
-					const vaultName = vault.getName();
+					const vaultName = urlEncode(vault.getName());
 					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
 					const encodedLink = urlEncode(obsidianDeepLink);
 					const todo = contructTodo(fileName, this.settings, fileName);
