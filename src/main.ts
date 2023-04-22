@@ -58,7 +58,7 @@ export default class Things3Plugin extends Plugin {
 	async onload() {
 		// Queue for update multi liens
 		// const toChange = new Queue<number>();
-		
+
 		// Setup Settings Tab
 		await this.loadSettings();
 		this.addSettingTab(new Things3SyncSettingTab(this.app, this));
@@ -94,7 +94,7 @@ export default class Things3Plugin extends Plugin {
 				}
 			}
 		});
-	
+
 		// Create TODO Command
 		this.addCommand({
 			id: 'create-things-todo',
@@ -108,7 +108,7 @@ export default class Things3Plugin extends Plugin {
 				} else {
 					let fileName = urlEncode(fileTitle.name)
 					fileName = fileName.replace(/\.md$/, '')
-					const vaultName = vault.getName();
+					const vaultName = urlEncode(vault.getName());
 					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
 					// const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
 					const encodedLink = urlEncode(obsidianDeepLink);
@@ -134,7 +134,7 @@ export default class Things3Plugin extends Plugin {
 				}
 			}
 		});
-		
+
 		// Toggle task status and sync to things
 		this.addCommand({
 			id: 'toggle-things-todo',

@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] 2023-01-30
+Bug Fix ver
+### Fixed
+* Fix vault name encoding bug.
+
 ## [1.2.1] 2023-01-30
 Bug Fix ver
 ### Fixed
