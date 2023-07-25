@@ -211,7 +211,7 @@ class Things3SyncSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Auth Token')
 			.setDesc('Require Things3 Auth Token for syncing Todo status; Get Auth Token\
-			via Things3 -> Preferece -> General -> Enable things URL -> Manage.')
+			via Things3 -> Preferences -> General -> Enable things URL -> Manage.')
 			.addText(text => text
 				.setPlaceholder('Leave Things3 Auth Token here')
 				.setValue(this.plugin.settings.authToken)
