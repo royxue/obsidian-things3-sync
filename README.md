@@ -1,5 +1,5 @@
-# Obsidian Things3 Sync
-A Plugin for syncing between Obsidian and Things3. Supporting with Multi Language, Tags and Date, Cross-Platform. 
+# Things3 Sync
+An Obsidian plugin for syncing between Obsidian and Things3. Supporting with Multi Language, Tags and Date, Cross-Platform.
 ## Features
 
 * Support Mac OS and iOS.

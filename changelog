@@ -1,7 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.2.2] 2023-01-30
+## [1.2.3] 2024-01-26
+Changed the plugin name, follow the latest Obsidian [devloper policy](https://docs.obsidian.md/Developer+policies).
+
+## [1.2.2] 2023-04-22
 Bug Fix ver
 ### Fixed
 * Fix vault name encoding bug.
