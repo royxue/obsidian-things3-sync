@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] 2024-01-27
+Fix plugin ID mismatch problem
+
 ## [1.2.3] 2024-01-26
 Changed the plugin name, follow the latest Obsidian [devloper policy](https://docs.obsidian.md/Developer+policies).
 

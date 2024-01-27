@@ -1,6 +1,6 @@
 {
-	"name": "things3-sync",
-	"version": "1.2.3",
+	"name": "obsidian-things3-sync",
+	"version": "1.2.4",
 	"description": "An Obsidian plugin for sync between Obsidian and Things3, create Todo and sync Todo status",
 	"main": "main.js",
 	"scripts": {
