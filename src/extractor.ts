@@ -16,7 +16,7 @@ export function extractTitle(line: string) {
 	if (content != null) {
 		title = content[0]
 	}
-	
+
 	return title;
 }
 
@@ -29,7 +29,7 @@ export function extractTags(line: string, setting_tags: string){
 	}
 	line = line.replace(regex, '');
 	const tags = tag_array.join(',')
-	
+
 	return tags;
 }
 
@@ -38,7 +38,7 @@ export function extractTarget(line: string) {
 	const id = line.match(regexId);
 	let todoId: string;
 	if (id != null) {
-		todoId = id[1];	
+		todoId = id[1];
 	} else {
 		todoId = ''
 	}

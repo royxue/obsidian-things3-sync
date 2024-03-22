@@ -40,13 +40,13 @@ const DEFAULT_SETTINGS: PluginSettings = {
 function contructTodo(line: string, settings: PluginSettings, fileName: string){
 	line = line.trim();
 	const tags = extractTags(line, settings.defaultTags);
-
+	const date = extractDate(line) || extractDate(fileName);
 	line = line.replace(/#([^\s]+)/gs, '');
 
 	const todo: TodoInfo = {
 		title: extractTitle(line),
 		tags: tags,
-		date: extractDate(fileName)
+		date: date
 	}
 
 	return todo;
