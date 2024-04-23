@@ -5,7 +5,8 @@ export interface TodoInfo {
 }
 
 export function createTodo(todo: TodoInfo, deepLink: string){
-	const url = `things:///add?title=${todo.title}&notes=${deepLink}&when=${todo.date}&x-success=obsidian://things-sync-id&tags=${todo.tags}`;
+	const title = todo.title.replace(/ /g, '%20').replace(/&/g, '%26');
+	const url = `things:///add?title=${title}&notes=${deepLink}&when=${todo.date}&x-success=obsidian://things-sync-id&tags=${todo.tags}`;
 	window.open(url);
 }
 
