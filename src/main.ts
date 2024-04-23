@@ -29,12 +29,14 @@ function getCurrentLine(editor: Editor, view: MarkdownView) {
 
 interface PluginSettings {
 	authToken: string,
-	defaultTags: string
+	defaultTags: string,
+	detachedMode: boolean
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	authToken: '',
-	defaultTags: ''
+	defaultTags: '',
+	detachedMode: false
 }
 
 function contructTodo(line: string, settings: PluginSettings, fileName: string){
@@ -65,6 +67,9 @@ export default class Things3Plugin extends Plugin {
 
 		// Register Protocol Handler
 		this.registerObsidianProtocolHandler("things-sync-id", async (id) => {
+			if (this.settings.detachedMode) {
+				return;
+			}
 			const todoID = id['x-things-id'];
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view == null) {
@@ -115,22 +120,6 @@ export default class Things3Plugin extends Plugin {
 					const line = getCurrentLine(editor, view);
 					const todo = contructTodo(line, this.settings, fileName);
 					createTodo(todo, encodedLink)
-
-					// let cursorLines: Array<number>;
-					// if (editor.somethingSelected()){
-					// 	const selected = editor.listSelections()[0];
-					// 	cursorLines = rangeByStep(selected.anchor.line, selected.head.line, 1)
-					// } else {
-					// 	cursorLines = [editor.getCursor().line]
-					// }
-					// for (const l of cursorLines) {
-					// 	editor.setCursor(l);
-					// 	const line = getCurrentLine(editor, view);
-					// 	const todo = contructTodo(line, this.settings, fileName);
-					// 	createTodo(todo, encodedLink)
-					// 	toChange.enqueue(l);
-					// }
-
 				}
 			}
 		});
