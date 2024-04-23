@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] 2024-04-23
+* Add detached mode: only create todo in Things, without changing Obsidian note.
+* Support '&' in things link.
+* Fetch date inline if there is one, otherwise use the filename.
+
 ## [1.2.4] 2024-01-27
 Fix plugin ID mismatch problem
 
