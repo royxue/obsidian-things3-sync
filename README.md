@@ -1,35 +1,36 @@
 # Things3 Sync
-An Obsidian plugin for syncing between Obsidian and Things3. Supporting with Multi Language, Tags and Date, Cross-Platform.
+A cross-platform Obsidian plugin for syncing todos (as well as tags, dates) between Obsidian and Things3 (with multi-language support).
 ## Features
 
-* Support Mac OS and iOS.
-* Support **Multiple Language** when creating todo.
-* Support **Todo Tags**. You can just add tags after todo, or add default tags in setting.
-* Support **Capture Date**, if you the file has a Date in it, it will capture the date when create the todo.
+* **Cross-Platform**: Works on both desktop and mobile
+* **Multiple Languages**: Use any language when creating todos
+* **Todo Tags**: You can enter tags after your todo text, or via the default tags in the settings
+* **Date Capture**: If the Obsidian note includes a date, it will be included when creating the todo in Things3.
 
 ## Usage
 
-### Create Todo
+### Creating A Todo
 ![create](./misc/create.png)
 
-* Select the line of todo
+* Select the line of the todo
 
 * Using `cmd + p` and run the `Things3 Sync: Create Todo`
 
-* ***Tags***: for now, the tags only support Things exsited tags. So add tag in Things3 first, and then use this plugin.
+* ***Note:*** The tags feature currently only supports tags that already exist in Things3. To add a new tag, you'll need to first create it in Things3, and then you will be able to use it in this plugin.
 
-### Toggle Todo
+### Toggling a Todo's Status
 
-* Select the line of todo
+* Select the line of the todo
 
 * Using `cmd + P` and run the `Things3 Sync: Toggle Todo`
 
-* The Todo will be toggled both in Obsidian and Things3
+* The status of the todo will be toggled in both Obsidian and Things3
 
-***Notes:*** If you wanna use the command conveniently, it would be better to set up a hotkeys for it.
+***Pro Tip:*** This feature can be assigned a hotkey for faster, more convenient toggling.
 
-### Create Todo from Note
-Directly create a Todo from Obsidian Note, with a backlink in Things3
+### Creating a Todo from a Note
+
+You can create a Things3 todo from an Obsidian note. This plugin will automatically include a backlink to the Obisidian note in the todo in Things3
 
 ## Roadmap
 
@@ -39,23 +40,24 @@ Directly create a Todo from Obsidian Note, with a backlink in Things3
 
 - [x] Better tags support.
 
-- [ ] ~~Better toggle trigger method.~~ Due to Things API limitation
+- [ ] ~~Better toggle trigger method.~~ Not (currently) possible due to a limitation in the Things3 API
 
-- [ ] ~~Multi-line support.~~ Due to Things x Obsidian communication limitation
+- [ ] ~~Multi-line support.~~ Not (currently) possible due to a communication limitation between Things3 and Obsidian
 
 - [x] Obsidian Note to Things3 Todo
 
 ## Security
 
-This plugin require your Things 3 Auth Token for sync Todo status. The token will be locally saved in your vault obsidian folder(./obsidian/plugins). So be carefully not to share the folder directly to anyone else, incase they got your token.
+This plugin requires an authentication token from Things3 in order to sync data between Obsidian and Things3. That auth token will be stored in plain-text inside your Obsidian vault's plugin folder (e.g., `./obsidian/plugins/obsidian-things3-sync`). As a result, you should be cautious when syncing or sharing the settings for this plugin.
 
-## Feedback & Request
+## Feature Requests/Feedback
 
-Any feedback or request, please submit a issue here ;)
+Both feature requests and feedback are welcome. Please feel free to submit an issue for either ;)
+
 Thanks a lot.
 
 ## Attribution
-These following repos offered great help during development:
+The folliwng repositories offered great help during the development of this plugin:
 * [Todoist Text](https://github.com/wesmoncrief/obsidian-todoist-text)
 * [Things Link](https://github.com/gavinmn/obsidian-things-link)
 
