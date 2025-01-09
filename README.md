@@ -2,7 +2,7 @@
 A cross-platform Obsidian plugin for syncing todos (as well as tags, dates) between Obsidian and Things3 (with multi-language support).
 ## Features
 
-* **Cross-Platform**: Works on both desktop and mobile
+* **Cross-Platform**: Works on both macOS and iOS
 * **Multiple Languages**: Use any language when creating todos
 * **Todo Tags**: You can enter tags after your todo text, or via the default tags in the settings
 * **Date Capture**: If the Obsidian note includes a date, it will be included when creating the todo in Things3.
