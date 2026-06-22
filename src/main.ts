@@ -111,15 +111,11 @@ export default class Things3Plugin extends Plugin {
 				if (fileTitle == null) {
 					return;
 				} else {
-					let fileName = urlEncode(fileTitle.name)
-					fileName = fileName.replace(/\.md$/, '')
-					const vaultName = urlEncode(vault.getName());
-					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
-					// const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
-					const encodedLink = urlEncode(obsidianDeepLink);
+					const fileName = fileTitle.name.replace(/\.md$/, '')
+					const obsidianDeepLink = constructDeeplink(urlEncode(fileName), urlEncode(vault.getName()));
 					const line = getCurrentLine(editor, view);
 					const todo = contructTodo(line, this.settings, fileName);
-					createTodo(todo, encodedLink)
+					createTodo(todo, obsidianDeepLink)
 				}
 			}
 		});
@@ -158,13 +154,10 @@ export default class Things3Plugin extends Plugin {
 				if (fileTitle == null) {
 					return;
 				} else {
-					let fileName = urlEncode(fileTitle.name)
-					fileName = fileName.replace(/\.md$/, '')
-					const vaultName = urlEncode(vault.getName());
-					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
-					const encodedLink = urlEncode(obsidianDeepLink);
+					const fileName = fileTitle.name.replace(/\.md$/, '')
+					const obsidianDeepLink = constructDeeplink(urlEncode(fileName), urlEncode(vault.getName()));
 					const todo = contructTodo(fileName, this.settings, fileName);
-					createTodoFromNote(todo, encodedLink)
+					createTodoFromNote(todo, obsidianDeepLink)
 				}
 			}
 		});
