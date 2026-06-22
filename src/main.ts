@@ -17,14 +17,19 @@ import {
 	extractTags,
 	extractTarget,
 	extractTitle
-} from './extractor'
+} from './extractor';
 
-// import { rangeByStep, Queue } from './utils';
+// `commands` is an internal Obsidian API not covered by the public typings.
+declare module 'obsidian' {
+	interface App {
+		commands: {
+			executeCommandById(id: string): void;
+		};
+	}
+}
 
-function getCurrentLine(editor: Editor, view: MarkdownView) {
-	const lineNumber = editor.getCursor().line
-	const lineText = editor.getLine(lineNumber)
-	return lineText
+function getCurrentLine(editor: Editor): string {
+	return editor.getLine(editor.getCursor().line);
 }
 
 interface PluginSettings {
@@ -39,33 +44,28 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	detachedMode: false
 }
 
-function contructTodo(line: string, settings: PluginSettings, fileName: string){
+function constructTodo(line: string, settings: PluginSettings, fileName: string): TodoInfo {
 	line = line.trim();
 	const tags = extractTags(line, settings.defaultTags);
 	const date = extractDate(line) || extractDate(fileName);
 	line = line.replace(/#([^\s]+)/gs, '');
 
-	const todo: TodoInfo = {
+	return {
 		title: extractTitle(line),
 		tags: tags,
 		date: date
-	}
-
-	return todo;
+	};
 }
 
 export default class Things3Plugin extends Plugin {
 	settings: PluginSettings;
 
 	async onload() {
-		// Queue for update multi liens
-		// const toChange = new Queue<number>();
-
-		// Setup Settings Tab
 		await this.loadSettings();
 		this.addSettingTab(new Things3SyncSettingTab(this.app, this));
 
-		// Register Protocol Handler
+		// Register Protocol Handler: Things3 calls back with the new todo id so
+		// we can rewrite the source line into a linked checkbox.
 		this.registerObsidianProtocolHandler("things-sync-id", async (id) => {
 			if (this.settings.detachedMode) {
 				return;
@@ -74,104 +74,91 @@ export default class Things3Plugin extends Plugin {
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view == null) {
 				return;
-			} else {
-				const editor = view.editor
-				// const l = toChange.dequeue();
-				// editor.setCursor(l);
-				const currentLine = getCurrentLine(editor, view)
-				const firstLetterIndex = currentLine.search(/[^\s#\-\[\]*]/);
-				const line = currentLine.substring(firstLetterIndex, currentLine.length)
-				const editorPosition = view.editor.getCursor()
-				const lineLength = view.editor.getLine(editorPosition.line).length
-				const startRange: EditorPosition = {
-					line: editorPosition.line,
-					ch: firstLetterIndex
-				}
-				const endRange: EditorPosition = {
-					line: editorPosition.line,
-					ch: lineLength
-				}
+			}
+			const editor = view.editor;
+			const currentLine = getCurrentLine(editor);
+			const firstLetterIndex = currentLine.search(/[^\s#\-\[\]*]/);
+			const line = currentLine.substring(firstLetterIndex, currentLine.length);
+			const editorPosition = editor.getCursor();
+			const lineLength = editor.getLine(editorPosition.line).length;
+			const startRange: EditorPosition = {
+				line: editorPosition.line,
+				ch: firstLetterIndex
+			};
+			const endRange: EditorPosition = {
+				line: editorPosition.line,
+				ch: lineLength
+			};
 
-				if (firstLetterIndex > 0) {
-					view.editor.replaceRange(`[${line}](things:///show?id=${todoID})`, startRange, endRange);
-				} else {
-					view.editor.replaceRange(`- [ ] [${line}](things:///show?id=${todoID})`, startRange, endRange);
-				}
+			if (firstLetterIndex > 0) {
+				editor.replaceRange(`[${line}](things:///show?id=${todoID})`, startRange, endRange);
+			} else {
+				editor.replaceRange(`- [ ] [${line}](things:///show?id=${todoID})`, startRange, endRange);
 			}
 		});
 
-		// Create TODO Command
+		// Create a Things3 todo from the current line.
 		this.addCommand({
 			id: 'create-things-todo',
 			name: 'Create Things Todo',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				const workspace = this.app.workspace;
-				const vault = this.app.vault;
-				const fileTitle = workspace.getActiveFile()
-				if (fileTitle == null) {
+			editorCallback: (editor: Editor) => {
+				const context = this.getActiveNoteContext();
+				if (context == null) {
+					new Notice('No active note');
 					return;
-				} else {
-					let fileName = urlEncode(fileTitle.name)
-					fileName = fileName.replace(/\.md$/, '')
-					const vaultName = urlEncode(vault.getName());
-					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
-					// const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
-					const encodedLink = urlEncode(obsidianDeepLink);
-					const line = getCurrentLine(editor, view);
-					const todo = contructTodo(line, this.settings, fileName);
-					createTodo(todo, encodedLink)
 				}
+				const line = getCurrentLine(editor);
+				const todo = constructTodo(line, this.settings, context.fileName);
+				createTodo(todo, context.deepLink);
 			}
 		});
 
-		// Toggle task status and sync to things
+		// Toggle the current todo's status in both Obsidian and Things3.
 		this.addCommand({
 			id: 'toggle-things-todo',
 			name: 'Toggle Things Todo',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				const workspace = this.app.workspace;
-				const fileTitle = workspace.getActiveFile()
-				if (fileTitle == null) {
+			editorCallback: (editor: Editor) => {
+				const line = getCurrentLine(editor);
+				const target = extractTarget(line);
+				if (target.todoId === '') {
+					new Notice('This is not a Things3 todo');
 					return;
-				} else {
-					const line = getCurrentLine(editor, view)
-					const target = extractTarget(line)
-					if (target.todoId == '') {
-						new Notice(`This is not a things3 todo`);
-					} else {
-						view.app.commands.executeCommandById("editor:toggle-checklist-status")
-						updateTodo(target.todoId, target.afterStatus, this.settings.authToken)
-						new Notice(`${target.todoId} set completed:${target.afterStatus} on things3`);
-					}
 				}
+				this.app.commands.executeCommandById('editor:toggle-checklist-status');
+				updateTodo(target.todoId, target.completed, this.settings.authToken);
+				new Notice(`${target.todoId} set completed:${target.completed} on Things3`);
 			}
 		});
 
-		// Toggle task status and sync to things
+		// Create a Things3 todo from the whole note (title becomes the todo).
 		this.addCommand({
 			id: 'create-things-todo-from-note',
 			name: 'Create Things Todo from Note',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				const workspace = this.app.workspace;
-				const vault = this.app.vault;
-				const fileTitle = workspace.getActiveFile()
-				if (fileTitle == null) {
+			editorCallback: () => {
+				const context = this.getActiveNoteContext();
+				if (context == null) {
+					new Notice('No active note');
 					return;
-				} else {
-					let fileName = urlEncode(fileTitle.name)
-					fileName = fileName.replace(/\.md$/, '')
-					const vaultName = urlEncode(vault.getName());
-					const obsidianDeepLink = constructDeeplink(fileName, vaultName);
-					const encodedLink = urlEncode(obsidianDeepLink);
-					const todo = contructTodo(fileName, this.settings, fileName);
-					createTodoFromNote(todo, encodedLink)
 				}
+				const todo = constructTodo(context.fileName, this.settings, context.fileName);
+				createTodoFromNote(todo, context.deepLink);
 			}
 		});
-
 	}
 
 	onunload() {
+	}
+
+	// Resolve the active note's bare name and an encoded obsidian:// deep link
+	// back to it, or null when there is no active file.
+	private getActiveNoteContext(): { fileName: string; deepLink: string } | null {
+		const file = this.app.workspace.getActiveFile();
+		if (file == null) {
+			return null;
+		}
+		const fileName = file.name.replace(/\.md$/, '');
+		const deepLink = constructDeeplink(urlEncode(fileName), urlEncode(this.app.vault.getName()));
+		return { fileName, deepLink };
 	}
 
 	async loadSettings() {
@@ -192,17 +179,17 @@ class Things3SyncSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
-		containerEl.createEl('h2', {text: 'Settings for Obsidian Things3 Sync.'});
+
+		new Setting(containerEl).setName('Things3 Sync').setHeading();
 
 		new Setting(containerEl)
-			.setName('Auth Token')
-			.setDesc('Require Things3 Auth Token for syncing Todo status; Get Auth Token\
-			via Things3 -> Preferences -> General -> Enable things URL -> Manage.')
+			.setName('Auth token')
+			.setDesc('Required for syncing todo status. Get it via Things3 → Settings → General → Enable Things URLs → Manage.')
 			.addText(text => text
-				.setPlaceholder('Leave Things3 Auth Token here')
+				.setPlaceholder('Enter your Things3 auth token')
 				.setValue(this.plugin.settings.authToken)
 				.onChange(async (value) => {
 					this.plugin.settings.authToken = value;
@@ -210,14 +197,23 @@ class Things3SyncSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Default Tags')
-			.setDesc('The default tags for Obsidian Todo; Using comma(,) \
-			to separate multiple tags; Leave this in blank for no default tags')
+			.setName('Default tags')
+			.setDesc('Comma-separated tags added to every todo. Leave blank for none.')
 			.addText(text => text
-				.setPlaceholder('Leave your tags here')
+				.setPlaceholder('tag1,tag2')
 				.setValue(this.plugin.settings.defaultTags)
 				.onChange(async (value) => {
 					this.plugin.settings.defaultTags = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Detached mode')
+			.setDesc('When enabled, new todos are not linked back into the note (the source line is left unchanged).')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.detachedMode)
+				.onChange(async (value) => {
+					this.plugin.settings.detachedMode = value;
 					await this.plugin.saveSettings();
 				}));
 	}

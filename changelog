@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] 2026-06-22
+* Fix URL encoding for Things3 deep links (titles/tags/notes with spaces or special characters no longer break the link).
+* Add the missing Detached mode toggle to the settings tab.
+* Clarify in the README that sync is one-way (Obsidian → Things3).
+* Internal: remove dead code, add a vitest test suite, and type the internal commands API.
+
 ## [1.3.0] 2024-04-23
 * Add detached mode: only create todo in Things, without changing Obsidian note.
 * Support '&' in things link.
