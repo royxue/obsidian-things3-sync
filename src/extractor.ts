@@ -10,14 +10,9 @@ export function extractDate(line:string) {
 }
 
 export function extractTitle(line: string) {
-	const regex = /[^#\s\-\[\]*](.*)/gs
-	const content = line.match(regex);
-	let title = '';
-	if (content != null) {
-		title = content[0]
-	}
-
-	return title;
+	// Strip a leading markdown list / checkbox / heading marker
+	// (e.g. "- [ ] ", "* ", "# ") and surrounding whitespace.
+	return line.replace(/^[\s#\-\[\]*]+/, '').trim();
 }
 
 export function extractTags(line: string, setting_tags: string){
@@ -34,23 +29,12 @@ export function extractTags(line: string, setting_tags: string){
 }
 
 export function extractTarget(line: string) {
-	const regexId = /id=(\w+)/
-	const id = line.match(regexId);
-	let todoId: string;
-	if (id != null) {
-		todoId = id[1];
-	} else {
-		todoId = ''
-	}
+	const idMatch = line.match(/id=(\w+)/);
+	const todoId = idMatch != null ? idMatch[1] : '';
 
-	const regexStatus = /\[(.)\]/
-	const status = line.match(regexStatus)
-	let afterStatus: string;
-	if (status && status[1] == ' ') {
-		afterStatus = 'true'
-	} else {
-		afterStatus = 'false'
-	}
+	// An unchecked box ("[ ]") means toggling will mark it completed.
+	const statusMatch = line.match(/\[(.)\]/);
+	const completed = statusMatch != null && statusMatch[1] === ' ';
 
-	return  {todoId, afterStatus}
+	return { todoId, completed };
 }

@@ -25,10 +25,10 @@ export function createTodo(todo: TodoInfo, deepLink: string){
 	window.open(url);
 }
 
-export function updateTodo(todoId: string, completed: string, authToken: string){
+export function updateTodo(todoId: string, completed: boolean, authToken: string){
 	const url = buildThingsUrl('update', {
 		id: todoId,
-		completed: completed,
+		completed: String(completed),
 		'auth-token': authToken,
 	});
 	window.open(url);
