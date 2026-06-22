@@ -7,6 +7,16 @@ A cross-platform Obsidian plugin for syncing todos (as well as tags, dates) betw
 * **Todo Tags**: You can enter tags after your todo text, or via the default tags in the settings
 * **Date Capture**: If the Obsidian note includes a date, it will be included when creating the todo in Things3.
 
+## How It Works (and What It Doesn't)
+
+This plugin is **one-way**: you push changes *from* Obsidian *to* Things3. Things3's URL scheme doesn't allow listening for changes, so:
+
+* ✅ Creating a todo and toggling its status are triggered from Obsidian, per line.
+* ✅ Toggling status updates **both** Obsidian and Things3.
+* ❌ Completing or editing a task **in Things3 does not update Obsidian** — there is no automatic sync back.
+* ℹ️ Only the title, tags, and done/not-done state are synced. Tags must already exist in Things3 (see the note under *Creating A Todo*).
+* ℹ️ *Creating a Todo from a Note* adds a backlink to your note inside the Things3 todo, but does **not** modify the Obsidian note itself.
+
 ## Usage
 
 ### Creating A Todo
