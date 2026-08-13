@@ -6,6 +6,7 @@ A cross-platform Obsidian plugin for syncing todos (as well as tags, dates) betw
 * **Multiple Languages**: Use any language when creating todos
 * **Todo Tags**: You can enter tags after your todo text, or via the default tags in the settings
 * **Date Capture**: If the Obsidian note includes a date, it will be included when creating the todo in Things3.
+* **Permanent Links**: Optionally link todos via the [Advanced URI](https://github.com/Vinzent03/obsidian-advanced-uri) plugin using a uid stored in the note's frontmatter `id`, so backlinks survive renames, moves, and duplicate note names (enable *Advanced URI mode* in the settings).
 
 ## How It Works (and What It Doesn't)
 

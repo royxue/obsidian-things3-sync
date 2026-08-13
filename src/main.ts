@@ -1,8 +1,9 @@
-import { App, Editor, MarkdownView, EditorPosition, Plugin, PluginSettingTab, Setting, Notice } from 'obsidian';
+import { App, Editor, MarkdownView, EditorPosition, Plugin, PluginSettingTab, Setting, Notice, TFile } from 'obsidian';
 
 import {
 	urlEncode,
-	constructDeeplink
+	constructDeeplink,
+	constructAdvancedUriDeeplink
 } from './url';
 
 import {
@@ -19,12 +20,16 @@ import {
 	extractTitle
 } from './extractor';
 
-// `commands` is an internal Obsidian API not covered by the public typings.
+// `commands` and `processFrontMatter` are not covered by the installed
+// version of the public typings.
 declare module 'obsidian' {
 	interface App {
 		commands: {
 			executeCommandById(id: string): void;
 		};
+	}
+	interface FileManager {
+		processFrontMatter(file: TFile, fn: (frontmatter: Record<string, unknown>) => void): Promise<void>;
 	}
 }
 
@@ -35,13 +40,15 @@ function getCurrentLine(editor: Editor): string {
 interface PluginSettings {
 	authToken: string,
 	defaultTags: string,
-	detachedMode: boolean
+	detachedMode: boolean,
+	advancedUriMode: boolean
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	authToken: '',
 	defaultTags: '',
-	detachedMode: false
+	detachedMode: false,
+	advancedUriMode: false
 }
 
 function constructTodo(line: string, settings: PluginSettings, fileName: string): TodoInfo {
@@ -101,8 +108,8 @@ export default class Things3Plugin extends Plugin {
 		this.addCommand({
 			id: 'create-things-todo',
 			name: 'Create Things Todo',
-			editorCallback: (editor: Editor) => {
-				const context = this.getActiveNoteContext();
+			editorCallback: async (editor: Editor) => {
+				const context = await this.getActiveNoteContext();
 				if (context == null) {
 					new Notice('No active note');
 					return;
@@ -134,8 +141,8 @@ export default class Things3Plugin extends Plugin {
 		this.addCommand({
 			id: 'create-things-todo-from-note',
 			name: 'Create Things Todo from Note',
-			editorCallback: () => {
-				const context = this.getActiveNoteContext();
+			editorCallback: async () => {
+				const context = await this.getActiveNoteContext();
 				if (context == null) {
 					new Notice('No active note');
 					return;
@@ -150,15 +157,35 @@ export default class Things3Plugin extends Plugin {
 	}
 
 	// Resolve the active note's bare name and an encoded obsidian:// deep link
-	// back to it, or null when there is no active file.
-	private getActiveNoteContext(): { fileName: string; deepLink: string } | null {
+	// back to it, or null when there is no active file. In Advanced URI mode
+	// the link uses the note's frontmatter `id` (generated when missing), so
+	// it survives renames, moves, and duplicate note names.
+	private async getActiveNoteContext(): Promise<{ fileName: string; deepLink: string } | null> {
 		const file = this.app.workspace.getActiveFile();
 		if (file == null) {
 			return null;
 		}
 		const fileName = file.name.replace(/\.md$/, '');
-		const deepLink = constructDeeplink(urlEncode(fileName), urlEncode(this.app.vault.getName()));
-		return { fileName, deepLink };
+		const vaultName = urlEncode(this.app.vault.getName());
+		if (this.settings.advancedUriMode) {
+			const uid = await this.getNoteUid(file);
+			return { fileName, deepLink: constructAdvancedUriDeeplink(urlEncode(uid), vaultName) };
+		}
+		return { fileName, deepLink: constructDeeplink(urlEncode(fileName), vaultName) };
+	}
+
+	// Read the note's frontmatter `id` (the default uid key of the Advanced
+	// URI plugin), generating and persisting one when missing.
+	private async getNoteUid(file: TFile): Promise<string> {
+		const cached = this.app.metadataCache.getFileCache(file)?.frontmatter?.id;
+		if (cached != null && cached !== '') {
+			return String(cached);
+		}
+		const uid = crypto.randomUUID();
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			frontmatter['id'] = uid;
+		});
+		return uid;
 	}
 
 	async loadSettings() {
@@ -214,6 +241,16 @@ class Things3SyncSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.detachedMode)
 				.onChange(async (value) => {
 					this.plugin.settings.detachedMode = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Advanced URI mode')
+			.setDesc('Link todos via the Advanced URI plugin using a permanent uid stored in the note\'s frontmatter `id` (survives renames, moves, and duplicate note names). Requires the Advanced URI plugin to be installed.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.advancedUriMode)
+				.onChange(async (value) => {
+					this.plugin.settings.advancedUriMode = value;
 					await this.plugin.saveSettings();
 				}));
 	}
