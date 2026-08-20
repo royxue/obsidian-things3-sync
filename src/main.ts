@@ -41,14 +41,16 @@ interface PluginSettings {
 	authToken: string,
 	defaultTags: string,
 	detachedMode: boolean,
-	advancedUriMode: boolean
+	advancedUriMode: boolean,
+	uidField: string
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	authToken: '',
 	defaultTags: '',
 	detachedMode: false,
-	advancedUriMode: false
+	advancedUriMode: false,
+	uidField: 'id'
 }
 
 function constructTodo(line: string, settings: PluginSettings, fileName: string): TodoInfo {
@@ -158,7 +160,7 @@ export default class Things3Plugin extends Plugin {
 
 	// Resolve the active note's bare name and an encoded obsidian:// deep link
 	// back to it, or null when there is no active file. In Advanced URI mode
-	// the link uses the note's frontmatter `id` (generated when missing), so
+	// the link uses the note's frontmatter uid (generated when missing), so
 	// it survives renames, moves, and duplicate note names.
 	private async getActiveNoteContext(): Promise<{ fileName: string; deepLink: string } | null> {
 		const file = this.app.workspace.getActiveFile();
@@ -174,16 +176,18 @@ export default class Things3Plugin extends Plugin {
 		return { fileName, deepLink: constructDeeplink(urlEncode(fileName), vaultName) };
 	}
 
-	// Read the note's frontmatter `id` (the default uid key of the Advanced
-	// URI plugin), generating and persisting one when missing.
+	// Read the note's uid from the configured frontmatter field (must match
+	// the Advanced URI plugin's uid field), generating and persisting one
+	// when missing.
 	private async getNoteUid(file: TFile): Promise<string> {
-		const cached = this.app.metadataCache.getFileCache(file)?.frontmatter?.id;
+		const field = this.settings.uidField.trim() || DEFAULT_SETTINGS.uidField;
+		const cached = this.app.metadataCache.getFileCache(file)?.frontmatter?.[field];
 		if (cached != null && cached !== '') {
 			return String(cached);
 		}
 		const uid = crypto.randomUUID();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
-			frontmatter['id'] = uid;
+			frontmatter[field] = uid;
 		});
 		return uid;
 	}
@@ -246,11 +250,22 @@ class Things3SyncSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Advanced URI mode')
-			.setDesc('Link todos via the Advanced URI plugin using a permanent uid stored in the note\'s frontmatter `id` (survives renames, moves, and duplicate note names). Requires the Advanced URI plugin to be installed.')
+			.setDesc('Link todos via the Advanced URI plugin using a permanent uid stored in the note\'s frontmatter (survives renames, moves, and duplicate note names). Requires the Advanced URI plugin to be installed.')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.advancedUriMode)
 				.onChange(async (value) => {
 					this.plugin.settings.advancedUriMode = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('UID frontmatter field')
+			.setDesc('Frontmatter field storing the note uid used by Advanced URI mode. Must match the "UID field in frontmatter" setting of the Advanced URI plugin.')
+			.addText(text => text
+				.setPlaceholder('id')
+				.setValue(this.plugin.settings.uidField)
+				.onChange(async (value) => {
+					this.plugin.settings.uidField = value;
 					await this.plugin.saveSettings();
 				}));
 	}
