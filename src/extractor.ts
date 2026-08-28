@@ -12,7 +12,7 @@ export function extractDate(line:string) {
 export function extractTitle(line: string) {
 	// Strip a leading markdown list / checkbox / heading marker
 	// (e.g. "- [ ] ", "* ", "# ") and surrounding whitespace.
-	return line.replace(/^[\s#\-\[\]*]+/, '').trim();
+	return line.replace(/^[\s#\-[\]*]+/, '').trim();
 }
 
 export function extractTags(line: string, setting_tags: string){
@@ -37,4 +37,14 @@ export function extractTarget(line: string) {
 	const completed = statusMatch != null && statusMatch[1] === ' ';
 
 	return { todoId, completed };
+}
+
+// Locate the first markdown checkbox on a line and the character it should be
+// flipped to, or null when the line has no checkbox.
+export function findCheckboxToggle(line: string): { ch: number, status: string } | null {
+	const match = line.match(/\[(.)\]/);
+	if (match == null || match.index === undefined) {
+		return null;
+	}
+	return { ch: match.index + 1, status: match[1] === ' ' ? 'x' : ' ' };
 }

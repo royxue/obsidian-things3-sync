@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractDate, extractTitle, extractTags, extractTarget } from './extractor';
+import { extractDate, extractTitle, extractTags, extractTarget, findCheckboxToggle } from './extractor';
 
 describe('extractDate', () => {
 	it('extracts an ISO-like date at the start of a line', () => {
@@ -52,5 +52,26 @@ describe('extractTarget', () => {
 
 	it('returns an empty id for a non-Things line', () => {
 		expect(extractTarget('- [ ] Buy milk').todoId).toBe('');
+	});
+});
+
+describe('findCheckboxToggle', () => {
+	it('flips an unchecked box to checked', () => {
+		const line = '- [ ] [Buy milk](things:///show?id=ABC123)';
+		const toggle = findCheckboxToggle(line);
+		expect(toggle).toEqual({ ch: 3, status: 'x' });
+		expect(line.slice(0, 3) + 'x' + line.slice(4)).toBe('- [x] [Buy milk](things:///show?id=ABC123)');
+	});
+
+	it('flips a checked box back to unchecked', () => {
+		expect(findCheckboxToggle('- [x] [Buy milk](things:///show?id=ABC123)')).toEqual({ ch: 3, status: ' ' });
+	});
+
+	it('handles an indented checkbox', () => {
+		expect(findCheckboxToggle('\t\t- [ ] Buy milk')).toEqual({ ch: 5, status: 'x' });
+	});
+
+	it('returns null when the line has no checkbox', () => {
+		expect(findCheckboxToggle('Buy milk')).toBeNull();
 	});
 });
