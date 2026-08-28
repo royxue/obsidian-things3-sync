@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.3] 2026-08-28
+* Pass the Obsidian community directory automated review (`eslint-plugin-obsidianmd`): drop the settings heading that repeated the plugin name, use sentence case for command names, and remove the `builtin-modules` dependency.
+* Replace the undocumented `app.commands` API with a direct checkbox toggle when syncing todo status.
+* Use the public `FileManager.processFrontMatter` typings; `minAppVersion` is now 1.4.4, the release that introduced it.
+* Internal: migrate to ESLint 9 flat config with `eslint-plugin-obsidianmd`, update the Obsidian typings and TypeScript.
+
 ## [1.4.0] 2026-06-22
 * Fix URL encoding for Things3 deep links (titles/tags/notes with spaces or special characters no longer break the link).
 * Add the missing Detached mode toggle to the settings tab.

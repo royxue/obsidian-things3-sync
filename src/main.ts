@@ -17,24 +17,22 @@ import {
 	extractDate,
 	extractTags,
 	extractTarget,
-	extractTitle
+	extractTitle,
+	findCheckboxToggle
 } from './extractor';
-
-// `commands` and `processFrontMatter` are not covered by the installed
-// version of the public typings.
-declare module 'obsidian' {
-	interface App {
-		commands: {
-			executeCommandById(id: string): void;
-		};
-	}
-	interface FileManager {
-		processFrontMatter(file: TFile, fn: (frontmatter: Record<string, unknown>) => void): Promise<void>;
-	}
-}
 
 function getCurrentLine(editor: Editor): string {
 	return editor.getLine(editor.getCursor().line);
+}
+
+// Flip the first markdown checkbox on the current line between "[ ]" and "[x]".
+function toggleCheckbox(editor: Editor): void {
+	const line = editor.getCursor().line;
+	const toggle = findCheckboxToggle(editor.getLine(line));
+	if (toggle == null) {
+		return;
+	}
+	editor.replaceRange(toggle.status, { line, ch: toggle.ch }, { line, ch: toggle.ch + 1 });
 }
 
 interface PluginSettings {
@@ -86,7 +84,7 @@ export default class Things3Plugin extends Plugin {
 			}
 			const editor = view.editor;
 			const currentLine = getCurrentLine(editor);
-			const firstLetterIndex = currentLine.search(/[^\s#\-\[\]*]/);
+			const firstLetterIndex = currentLine.search(/[^\s#\-[\]*]/);
 			const line = currentLine.substring(firstLetterIndex, currentLine.length);
 			const editorPosition = editor.getCursor();
 			const lineLength = editor.getLine(editorPosition.line).length;
@@ -109,7 +107,7 @@ export default class Things3Plugin extends Plugin {
 		// Create a Things3 todo from the current line.
 		this.addCommand({
 			id: 'create-things-todo',
-			name: 'Create Things Todo',
+			name: 'Create Things todo',
 			editorCallback: async (editor: Editor) => {
 				const context = await this.getActiveNoteContext();
 				if (context == null) {
@@ -125,7 +123,7 @@ export default class Things3Plugin extends Plugin {
 		// Toggle the current todo's status in both Obsidian and Things3.
 		this.addCommand({
 			id: 'toggle-things-todo',
-			name: 'Toggle Things Todo',
+			name: 'Toggle Things todo',
 			editorCallback: (editor: Editor) => {
 				const line = getCurrentLine(editor);
 				const target = extractTarget(line);
@@ -133,7 +131,7 @@ export default class Things3Plugin extends Plugin {
 					new Notice('This is not a Things3 todo');
 					return;
 				}
-				this.app.commands.executeCommandById('editor:toggle-checklist-status');
+				toggleCheckbox(editor);
 				updateTodo(target.todoId, target.completed, this.settings.authToken);
 				new Notice(`${target.todoId} set completed:${target.completed} on Things3`);
 			}
@@ -142,7 +140,7 @@ export default class Things3Plugin extends Plugin {
 		// Create a Things3 todo from the whole note (title becomes the todo).
 		this.addCommand({
 			id: 'create-things-todo-from-note',
-			name: 'Create Things Todo from Note',
+			name: 'Create Things todo from note',
 			editorCallback: async () => {
 				const context = await this.getActiveNoteContext();
 				if (context == null) {
@@ -181,19 +179,23 @@ export default class Things3Plugin extends Plugin {
 	// when missing.
 	private async getNoteUid(file: TFile): Promise<string> {
 		const field = this.settings.uidField.trim() || DEFAULT_SETTINGS.uidField;
-		const cached = this.app.metadataCache.getFileCache(file)?.frontmatter?.[field];
-		if (cached != null && cached !== '') {
+		const cached: unknown = this.app.metadataCache.getFileCache(file)?.frontmatter?.[field];
+		if (typeof cached === 'string' && cached !== '') {
+			return cached;
+		}
+		if (typeof cached === 'number') {
 			return String(cached);
 		}
 		const uid = crypto.randomUUID();
-		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
-			frontmatter[field] = uid;
+		await this.app.fileManager.processFrontMatter(file, (matter: Record<string, unknown>) => {
+			matter[field] = uid;
 		});
 		return uid;
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = await this.loadData() as Partial<PluginSettings> | null;
+		this.settings = { ...DEFAULT_SETTINGS, ...data };
 	}
 
 	async saveSettings() {
@@ -213,8 +215,6 @@ class Things3SyncSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
-
-		new Setting(containerEl).setName('Things3 Sync').setHeading();
 
 		new Setting(containerEl)
 			.setName('Auth token')
